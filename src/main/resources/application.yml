@@ -4,13 +4,21 @@ spring:
   cloud:
     gateway:
       routes:
-        # 로그인은 JWT 검증 제외
-        - id: auth-service
-          uri: http://localhost:8080
+        # user-service 라우팅 (JWT 검증 제외)
+        - id: user-service-auth
+          uri: ${BACKEND_USER_SERVICE_URL:http://localhost:8083}
           predicates:
             - Path=/auth/**
           filters:
             - StripPrefix=0
+
+        # user-service 사용자 조회 (JWT 검증 적용)
+        - id: user-service-users
+          uri: ${BACKEND_USER_SERVICE_URL:http://localhost:8083}
+          predicates:
+            - Path=/users/**
+          filters:
+            - JwtAuthenticationFilter
 
         # inventory-service 라우팅
         - id: inventory-service
@@ -30,3 +38,8 @@ spring:
 
 server:
   port: 8080
+
+# JWT 설정 (User Service와 동일!)
+jwt:
+  secret: my-super-secret-key-for-jwt-token-generation-12345678
+  expiration: 3600000

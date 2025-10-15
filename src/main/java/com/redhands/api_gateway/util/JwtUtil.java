@@ -3,6 +3,7 @@ package com.redhands.api_gateway.util;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
@@ -13,10 +14,12 @@ import java.util.Map;
 @Component
 public class JwtUtil {
 
-    // Secret Key (실제로는 application.yml에서 관리)
-    private final SecretKey SECRET_KEY = Keys.hmacShaKeyFor(
-            "my-super-secret-key-for-jwt-token-generation-12345678".getBytes()
-    );
+    @Value("${jwt.secret}")
+    private String secret;
+
+    private SecretKey getSigningKey() {
+        return Keys.hmacShaKeyFor(secret.getBytes());
+    }
 
     // 토큰 유효 시간 (1시간)
     private final long EXPIRATION_TIME = 1000 * 60 * 60; // 1시간
@@ -33,7 +36,7 @@ public class JwtUtil {
                 .subject(username)
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
-                .signWith(SECRET_KEY)
+                .signWith(getSigningKey())
                 .compact();
     }
 
@@ -68,7 +71,7 @@ public class JwtUtil {
      */
     private Claims extractAllClaims(String token) {
         return Jwts.parser()
-                .verifyWith(SECRET_KEY)
+                .verifyWith(getSigningKey())
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();
