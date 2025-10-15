@@ -48,6 +48,15 @@ public class JwtAuthenticationFilter extends AbstractGatewayFilterFactory<JwtAut
             String username = jwtUtil.extractUsername(token);
             String role = jwtUtil.extractRole(token);
 
+            // Role 기반 접근 제어
+            if (config.getRequiredRole() != null) {
+                if (!role.equals(config.getRequiredRole())) {
+                    exchange.getResponse().setStatusCode(HttpStatus.FORBIDDEN);
+                    return exchange.getResponse().setComplete();
+                }
+            }
+
+            // 사용자 정보를 헤더에 추가
             ServerHttpRequest modifiedRequest = request.mutate()
                     .header("X-User-Name", username)
                     .header("X-User-Role", role)
@@ -58,6 +67,14 @@ public class JwtAuthenticationFilter extends AbstractGatewayFilterFactory<JwtAut
     }
 
     public static class Config {
-        // 설정이 필요하면 여기에 추가
+        private String requiredRole;  // 필요한 권한 (ADMIN, USER 등)
+
+        public String getRequiredRole() {
+            return requiredRole;
+        }
+
+        public void setRequiredRole(String requiredRole) {
+            this.requiredRole = requiredRole;
+        }
     }
 }

@@ -20,21 +20,35 @@ spring:
           filters:
             - JwtAuthenticationFilter
 
-        # inventory-service 라우팅
-        - id: inventory-service
+        # inventory-service 재고 조회 (모든 인증된 사용자)
+        - id: inventory-service-get
           uri: ${BACKEND_INVENTORY_SERVICE_URL:http://localhost:8081}
           predicates:
-            - Path=/api/parts/**
+            - Path=/api/parts
+            - Method=GET
           filters:
-            - JwtAuthenticationFilter
+            - name: JwtAuthenticationFilter
 
-        # order-service 라우팅
+        # inventory-service 재고 감소 (ADMIN만)
+        - id: inventory-service-decrease
+          uri: ${BACKEND_INVENTORY_SERVICE_URL:http://localhost:8081}
+          predicates:
+            - Path=/api/parts/*/decrease
+            - Method=PUT
+          filters:
+            - name: JwtAuthenticationFilter
+              args:
+                requiredRole: ADMIN
+
+        # order-service 주문 생성 (ADMIN만)
         - id: order-service
           uri: ${BACKEND_ORDER_SERVICE_URL:http://localhost:8082}
           predicates:
             - Path=/api/orders/**
           filters:
-            - JwtAuthenticationFilter
+            - name: JwtAuthenticationFilter
+              args:
+                requiredRole: ADMIN
 
 server:
   port: 8080
