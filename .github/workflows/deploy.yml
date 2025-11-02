@@ -34,3 +34,16 @@ jobs:
         run: |
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            cd ~/infrastructure
+            aws ecr get-login-password --region ap-northeast-2 | docker login --username AWS --password-stdin 502360275936.dkr.ecr.ap-northeast-2.amazonaws.com
+            docker compose --env-file .env.prod pull api-gateway
+            docker compose --env-file .env.prod up -d api-gateway
+            echo "API Gateway deployment completed!"
